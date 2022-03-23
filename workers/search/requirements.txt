@@ -1,0 +1,6 @@
+numpy==1.22.3
+# faiss-gpu==1.7.2
+faiss-gpu
+celery==5.2.3
+redis==4.1.4
+requests

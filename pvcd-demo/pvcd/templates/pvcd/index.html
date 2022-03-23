@@ -1,0 +1,641 @@
+{% extends "pvcd/base.html" %}
+<!--{% load rest_framework %}-->
+{% load base_tags %}
+{% load static %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h3> Partial Video Copy Detection</h3>
+        <h6> Partial Video Copy Detection</h6>
+    </div>
+</div>
+
+<div class="request">
+    <div class="container">
+        <div class="card">
+
+            <form id='input-form' action="{% url 'query-list' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="input-group ">
+                            <div class="input-group-prepend">
+                                <button id="input-open" class="btn btn-success btn-sm" type="button">
+                                    <a class="material-icons">video_file</a>
+                                </button>
+                            </div>
+
+                            <input id='input-file' name='video' type="file" hidden>
+                            <input id='input-text' type="text" class="form-control" placeholder="Upload File" readonly>
+                            <div class="input-group-append">
+                                <button id='input-submit' class="btn btn-primary btn-sm" type="button" disabled>Search
+                                </button>
+                                <button class="btn btn-primary btn-sm" type="button" data-toggle="modal"
+                                        data-target="#setting-modal">
+                                    <a class="material-icons">tune</a>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="preview-row">
+                    <div class="col-12 col-md-5 mb-3">
+                        <video id="input-video" class="video-js vjs-16-9">
+                        </video>
+                    </div>
+                    <div class="col-12 col-md-7 mb-3">
+                        <div id="input-info">
+                            <nav id="input-info-tab" class="nav nav-tabs" role="tablist"></nav>
+                            <div id="input-info-tab-content" class="tab-content"></div>
+                        </div>
+                        <button id='input-info-show-btn' class="btn btn-block btn-sm" type="button"
+                                data-toggle="collapse" data-target=".info-toggle" aria-expanded="false" hidden>
+                            <span>show metadata</span>
+
+                        </button>
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="modal fade" id="setting-modal" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Setting</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    {% render_field serializer.topk style %}
+                                    {% render_field serializer.window style %}
+                                    {% render_field serializer.score_threshold style %}
+                                    {% render_field serializer.match_threshold style %}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="result">
+    <div class="container">
+        <div class="card ">
+            <div id="result-detail" class="mb-3">
+                <div class="row mb-2">
+                    <div class="col-12 col-md-6">
+                        <h4>Query</h4>
+                        <video id="query-video" class="video-js vjs-16-9" controls>
+                        </video>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <h4>Reference</h4>
+                        <video id="ref-video" class="video-js vjs-16-9" controls>
+                        </video>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <img id="query-thumbnail" class="img-fluid">
+                    </div>
+                </div>
+                <div class="row mb-1">
+                    <div id='query-timeline' class="col-12"></div>
+                </div>
+                <div class="row">
+                    <div id='ref-timeline' class="col-12"></div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <img id="ref-thumbnail" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+            <div id="result-list">
+                <div id="result-status">
+                    <div class="row m-1 justify-content-between">
+                        <div class="col-auto form-inline">
+                            <h6 class="mr-2">
+                                <a id='result-status-link' target="_blank">Link</a>
+                            </h6>
+                            <h6>
+                                <a id='result-status-json' target="_blank">json</a>
+                            </h6>
+                        </div>
+                        <div class="col-auto form-inline">
+                            <label class="mr-2">Unit: </label>
+                            <select id='result-status-unit' class="form-control form-control-sm">
+                                <option value="video">video</option>
+                                <option value="segment" selected>segment</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id='result-list-head' class="card-header">
+                    <div class="row">
+                        <h6 class="col-1 text-center">Rank</h6>
+                        <h6 class="col-2 text-center">Poster</h6>
+                        <div class="col-9 text-center">
+                            <div class="row">
+                                <h6 class="col-6">Name</h6>
+                                <h6 class="col-2">Duration</h6>
+                                <h6 class="col-2">Match</h6>
+                                <h6 class="col-2">Score</h6>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+                <div id="result-list-content" class="list-group"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="{% static "pvcd/js/pvcd.js"%}"></script>
+<script>
+    $(document).ready(function () {
+        initialize_videojs_player('#input-video');
+        initialize_videojs_player('#query-video');
+        initialize_videojs_player('#ref-video');
+
+        $("body").tooltip({selector: '[data-toggle=tooltip]'});
+        test_print();
+
+    });
+
+
+    $('#input-open').on('click', function () {
+        $('#input-file').click();
+    })
+    $('#input-text').on('click', function () {
+        $('#input-file').click();
+    })
+    $('#input-file').on('change', function (e) {
+        clear_video('#input-video')
+        clear_mediainfo();
+
+        pause_video('#query-video')
+        pause_video('#ref-video')
+        if (this.value.length) {
+            let file = this.files[0];
+            $('#input-text').val(file.name);
+            show_mediainfo(file);
+            load_video_from_file('#input-video', file);
+            $('#input-submit').attr('disabled', false)
+            $('#preview-row').attr('hidden', false);
+
+            clear_video('#query-video')
+            clear_video('#ref-video')
+            clear_result_detail()
+            clear_result_list_content()
+        } else {
+            $('#input-text').val('');
+            $('#input-submit').attr('disabled', true)
+        }
+    });
+
+
+    $('#input-submit').on('click', function (e) {
+        clear_video('#query-video')
+        clear_video('#ref-video')
+        clear_result_detail()
+        clear_result_list_content()
+
+        $('#preview-row').attr('hidden', true);
+
+
+        let formData = new FormData(document.getElementById('input-form'));
+
+        $.ajax({
+            type: 'POST',
+            url: $('#input-form').attr('action'),
+            data: formData,
+            processData: false,
+            contentType: false,
+            enctype: 'multipart/form-data',
+            success: function (results) {
+
+                load_video_from_url(videojs('#query-video'), results['_video']);
+                $('#result-status-link').attr('href', results['url']);
+                $('#result-status-json').attr('href', results['url'] + '?format=json');
+
+                if (!results['results'].length) {
+                    show_result_list_content_empty()
+                }
+
+                let default_unit = 'segment'
+                $('#result-status-unit').val(default_unit);
+                show_result_list_content(results, default_unit);
+
+                $('#result-status-unit').on('change', function (e) {
+                    clear_result_list_content();
+
+                    let unit = $(this).val();
+                    show_result_list_content(results, unit);
+                })
+
+
+            },
+        });
+
+    });
+
+
+    function initialize_videojs_player(player_id) {
+        videojs(player_id, {
+            techOrder: ['html5'],
+            preload: 'auto',
+            muted: true,
+            controls: true,
+        });
+    }
+
+    function clear_result_detail() {
+        $('#query-timeline').empty();
+        $('#ref-timeline').empty();
+        $('#query-thumbnail').attr('src', '');
+        $('#ref-thumbnail').attr('src', '');
+    }
+
+    function clear_result_list_content() {
+        $('#result-list-content').empty();
+    }
+
+    function show_result_list_content_empty() {
+        $('#result-list-content').append($('<div>', {text: 'no result'}));
+    }
+
+    function show_result_list_content(results, unit) {
+        let _result_video = order_by_video(results['results']);
+        let _result = unit !== 'video' ? results['results'] : _result_video;
+
+        _result.forEach((r) => {
+            let item = create_result_list_content_item(r, unit)
+
+            $('#result-list-content').append(item);
+
+            $(item).on('click', function (e) {
+                e.preventDefault();
+                $(this).tab('show');
+                clear_result_detail();
+
+                load_video_from_url(videojs('#query-video'), results['_video']);
+                load_video_from_url(videojs('#ref-video'), r['reference']['_video']);
+
+                let selected_r = unit === 'video' ? r : _result_video.find(ref => {
+                    return ref['reference']['id'] === r['reference']['id']
+                })
+
+                let q_duration = parseFloat(results['metadata']['duration']);
+                let q_segments = selected_r['segments'].map(seg => {
+                    return {'start': seg['query_start'], 'end': seg['query_end']}
+                });
+                let q_timeline = draw_timeline(q_duration, q_segments)
+
+
+                let r_duration = parseFloat(r['reference']['metadata']['duration']);
+                let r_segments = selected_r['segments'].map(seg => {
+                    return {'start': seg['reference_start'], 'end': seg['reference_end']}
+                })
+                let r_timeline = draw_timeline(r_duration, r_segments);
+
+                let q_timeline_segments = $(q_timeline).children('.copy-segment');
+                let r_timeline_segments = $(r_timeline).children('.copy-segment');
+
+                q_timeline_segments.each((idx, elem) => {
+                    let pair = r_timeline_segments[idx];
+                    $(elem).hover(function (e) {
+                        $(pair).toggleClass('hover');
+                        $(pair).tooltip('show');
+                    }, function (e) {
+                        $(pair).toggleClass('hover');
+                        $(pair).tooltip('hide');
+                    })
+
+                    $(pair).hover(function (e) {
+                        $(elem).toggleClass('hover');
+                        $(elem).tooltip('show');
+                    }, function (e) {
+                        $(elem).toggleClass('hover');
+                        $(elem).tooltip('hide');
+                    })
+
+                    $(elem).click(function (e) {
+                        let query_start_time = $(elem).attr('data-start');
+                        let ref_start_time = $(pair).attr('data-start');
+
+                        play_video('#query-video', query_start_time);
+                        play_video('#ref-video', ref_start_time);
+                    })
+                    $(pair).click(function (e) {
+                        let query_start_time = $(elem).attr('data-start');
+                        let ref_start_time = $(pair).attr('data-start');
+
+                        play_video('#query-video', query_start_time);
+                        play_video('#ref-video', ref_start_time);
+
+                    })
+                })
+
+
+                $('#query-timeline').append(q_timeline);
+                $('#ref-timeline').append(r_timeline);
+
+                $('#query-thumbnail').attr('src', results['thumbnail']);
+                $('#ref-thumbnail').attr('src', r['reference']['thumbnail']);
+
+            });
+        });
+
+    }
+
+    function play_video(player_id, time) {
+        let player = videojs(player_id);
+        player.ready(function () {
+            player.currentTime(time);
+            player.play();
+        });
+    }
+
+    function clear_video(player_id) {
+        videojs(player_id).reset();
+    }
+
+    function pause_video(player_id) {
+        videojs(player_id).pause();
+    }
+
+
+    function create_result_list_content_item(result, unit) {
+        let item = $('<a>', {class: 'list-group-item list-group-item-action '});
+        let item_row = $('<div>', {id: 'result-list-' + result['rank'], class: 'row'});
+        item_row.append($('<h6>', {class: 'col-1 text-center align-middle', text: result['rank']}));
+        item_row.append($('<div>', {class: 'col-2 text-center'})
+            .append($('<img>', {
+                class: 'img-thumbnail',
+                src: result['reference']['poster']
+            })));
+
+        let duration = parseFloat(result['reference']['metadata']['duration']);
+        let meta = $('<div>', {class: 'col-9'});
+        let meta_row_1 = $('<div>', {class: 'row mb-3'});
+        meta_row_1.append($('<h6>', {class: 'col-6 ', text: result['reference']['name']}));
+        meta_row_1.append($('<h6>', {class: 'col-2 text-center', text: convert_sec_to_time(duration)}));
+        meta_row_1.append($('<h6>', {class: 'col-2 text-center', text: result['match']}))
+        meta_row_1.append($('<h6>', {class: 'col-2 text-center', text: result['score'].toFixed(2)}));
+
+
+        let meta_row_2 = $('<div>', {class: 'row'});
+
+        let segments = unit !== 'video' ? [{
+            'start': result['reference_start'],
+            'end': result['reference_end']
+        }] : result['segments'].map(seg => {
+            return {'start': seg['reference_start'], 'end': seg['reference_end']}
+        });
+
+        meta_row_2.append($('<div>', {class: 'col-11'}).append(draw_timeline(duration, segments)));
+
+
+        meta.append(meta_row_1)
+        meta.append(meta_row_2)
+        item_row.append(meta);
+
+        item.append(item_row);
+        return item;
+    }
+
+
+    function order_by_video(results) {
+        let _results = {};
+        results.forEach((result) => {
+            let k = result['reference']['id'];
+            let segment = {
+                'match': result['match'],
+                'query_end': result['query_end'],
+                'query_start': result['query_start'],
+                'rank': result['rank'],
+                'reference_end': result['reference_end'],
+                'reference_start': result['reference_start'],
+                'score': result['score'],
+            };
+
+            if (!_results.hasOwnProperty(k)) {
+                _results[k] = {
+                    'reference': result['reference'],
+                    'segments': [segment],
+                    'score': segment['score'],
+                    'match': segment['match']
+                }
+            } else {
+                _results[k]['segments'].push(segment);
+                _results[k]['score'] += segment['score']
+                _results[k]['match'] += segment['match']
+            }
+
+        })
+        let ord = Object.values(_results);
+        ord.sort((r1, r2) => {
+            if (r1['score'] > r2['score']) {
+                return -1;
+            } else if (r1['score'] < r2['score']) {
+                return 1;
+            }
+            return 0;
+        })
+        ord.forEach((result, idx) => {
+            result['rank'] = idx + 1;
+        })
+        return ord
+    }
+
+
+    function draw_timeline(duration, segments) {
+        let timeline = $('<div>', {class: 'position-relative bg-secondary', style: 'height:1rem;'});
+        for (var i = 0; i < segments.length; i++) {
+            let end = Math.min(duration, segments[i]['end']);
+            let width = Math.round((end - segments[i]['start']) / duration * 100)
+            let start = Math.round(segments[i]['start'] / duration * 100)
+            let title = convert_sec_to_time(segments[i]['start']) + ' - ' + convert_sec_to_time(end);
+
+            timeline.append($('<a>', {
+                class: 'position-absolute bg-success copy-segment',
+                style: 'left:' + start + '%;width:' + width + '%;height:100%;',
+                'data-toggle': 'tooltip',
+                'data-placement': "top",
+                'data-start': segments[i]['start'],
+                'data-end': segments[i]['end'],
+                title: title,
+            }));
+        }
+
+        $('.copy-segment').hover(function () {
+            $(this).toggleClass('hover');
+        }, function () {
+            $(this).toggleClass('hover');
+        });
+
+
+        return timeline
+    }
+
+
+    function convert_sec_to_time(sec) {
+        return new Date(sec * 1000).toISOString().substr(11, 8)
+    }
+
+
+    function get_video_type(file) {
+        let ext = file.name.split('.').pop().toLowerCase();
+        let type = 'video/mp4';
+        if (ext === 'flv') {
+            type = 'video/x-flv';
+        }
+        return type;
+    }
+
+    function load_video_from_url(player, url) {
+        player.reset();
+        player.src({src: url});
+    }
+
+    function load_video_from_file(player_id, file) {
+        let player = videojs(player_id);
+        let video_url = player.src();
+        if (video_url) {
+            URL.revokeObjectURL(video_url)
+        }
+        player.reset();
+        let video_type = get_video_type(file);
+        video_url = URL.createObjectURL(file);
+        player.src({src: video_url, type: video_type});
+        player.ready(function () {
+            player.pause();
+        });
+    }
+
+    function show_mediainfo(file) {
+        MediaInfo({format: 'object'}, (ctx) => {
+            const getSize = () => file.size
+            const readChunk = (chunkSize, offset) => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target.error) {
+                        reject(event.target.error);
+                    }
+                    resolve(new Uint8Array(event.target.result));
+                }
+                reader.readAsArrayBuffer(file.slice(offset, offset + chunkSize))
+            })
+            ctx.analyzeData(getSize, readChunk)
+                .then((result) => {
+                    let tracks = result['media']['track'];
+
+                    tracks.forEach((elem, idx) => {
+                        let tab_id = 'info-tab-' + idx;
+                        let content_id = 'info-content-' + idx;
+
+                        let tab = $('<a>', {
+                            id: tab_id,
+                            class: 'nav-item nav-link',
+                            href: '#' + content_id,
+                            'data-toggle': 'tab',
+                            text: elem['@type']
+                        });
+
+                        let content = $("<div>", {
+                            id: content_id,
+                            class: 'tab-pane fade table-responsive-md'
+                        }).append(mediainfo_table(elem));
+                        if (idx === 0) {
+                            tab.addClass('active show');
+                            content.addClass('active show');
+                        }
+                        $('#input-info-tab').append(tab);
+                        $('#input-info-tab-content').append(content);
+                    });
+                    $('#input-info-show-btn').attr('hidden', false);
+
+                })
+                .catch((error) => {
+                    console.log(error);
+                    show_mediainfo_error(error);
+                })
+        });
+    }
+
+    function clear_mediainfo() {
+        $('#input-info-tab').empty();
+        $('#input-info-tab-content').empty();
+        $('#input-info-show-btn').attr('hidden', true);
+    }
+
+    function show_mediainfo_error(error) {
+        $('#input-info-tab').append($('<a>', {
+            class: 'nav-item nav-link',
+            href: '#input-info-tab-error',
+            'data-toggle': 'tab',
+            text: 'Error'
+        }));
+        $('#input-info-tab-content').append($("<div>", {
+            id: 'input-info-tab-error',
+            class: 'tab-pane fade table-responsive-md',
+            text: `An error occured: ${error.stack}`
+        }));
+        $('#input-info-show-btn').attr('hidden', true);
+    }
+
+
+    function mediainfo_table(elem) {
+        let d = iter_nested_elem(elem);
+        let table = $('<table>', {class: 'table table-striped table-sm'});
+
+        let t_body = $('<tbody>').appendTo(table);
+
+        Object.keys(d).forEach((key, idx) => {
+            let tr = $('<tr>')
+                .append($('<th>', {class: 'w-25', text: key}))
+                .append($('<td>', {class: 'w-75', text: d[key]}))
+                .appendTo(t_body);
+            if (idx > 5) {
+                tr.addClass('collapse info-toggle')
+            }
+        })
+        return table;
+    }
+
+    function iter_nested_elem(elem, prefix) {
+        let d = {};
+        Object.keys(elem).forEach((key) => {
+            if (typeof elem[key] == "object") {
+                let o = iter_nested_elem(elem[key], key);
+                Object.assign(d, o);
+            } else {
+                let _key = key;
+                if (prefix) {
+                    _key = prefix + '__' + key;
+                }
+                d[_key] = elem[key];
+            }
+        })
+        return d;
+    }
+
+
+</script>
+
+
+{% endblock %}

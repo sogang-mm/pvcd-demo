@@ -1,0 +1,24 @@
+{% load base_tags %}
+<div class="navbar  navbar-static-top navbar-inverse navbar-expand-lg navbar-dark">
+    <div class="container">
+        {% block branding %}
+        <a class='navbar-brand' rel="nofollow" href='https://mmlab.sogang.ac.kr/'>MMLab-PVCD Demo</a>
+        {% endblock %}
+         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-content" aria-controls="navbar-content" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbar-content">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active"><a class="nav-link" href="#">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/api">API</a></li>
+                {% block userlinks %}
+                {% if user.is_authenticated %}
+                {% optional_logout request user %}
+                {% else %}
+                {% optional_login request %}
+                {% endif %}
+                {% endblock %}
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,188 @@
+version: '2.3'
+
+services:
+  nginx:
+    container_name: pvcd-demo_nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - "static:/static"
+      - "reference:/reference"
+      - "media:/media"
+
+  pvcd:
+    container_name: pvcd-demo_main-dev
+    build:
+      context: ./pvcd-demo
+      dockerfile: Dockerfile
+    runtime: nvidia
+    env_file:
+      - docker-compose-env/db.env
+      - docker-compose-env/pvcd.env
+    tty: true
+    stdin_open: true
+    volumes:
+      - type: volume
+        source: nfs_shared_
+        target: /mldisk/nfs_shared_
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_shared
+        target: /mldisk/nfs_shared
+        volume:
+          nocopy: true
+      - "static:/static"
+      - "reference:/reference"
+      - "media:/media"
+      - "/home/mmlab/Documents/ms/pvcd-demo/pvcd-demo:/workspace"
+    ports:
+      - "60000:8001" # for debug
+      - "60022:22"
+    expose:
+      - "8777"
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  mysql:
+    container_name: pvcd-demo_db-dev
+    image: mysql:8.0.21
+    restart: always
+    expose:
+      - 3306
+    env_file:
+      - docker-compose-env/db.env
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    container_name: pvcd-demo_rabbitmq
+    image: rabbitmq:3.7.14-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=user
+    expose:
+      - 5672
+    ports:
+      - 15672:15672
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      timeout: 3s
+      retries: 10
+
+  redis:
+    container_name: pvcd-demo_redis
+    image: redis:5.0-alpine
+    expose:
+      - 6379
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      timeout: 3s
+      retries: 10
+
+
+  worker-extractor:
+    container_name: pvcd-demo_worker-extractor
+    build:
+      context: ./workers/extractor
+      dockerfile: Dockerfile
+    environment:
+      - C_FORCE_ROOT=TRUE
+    tty: true
+    stdin_open: true
+    runtime: nvidia
+    ports:
+      - 5555:5555
+    volumes:
+      - "/home/mmlab/Documents/ms/pvcd-demo/workers/extractor:/workspace"
+      - "reference:/reference"
+      - "media:/media"
+    depends_on:
+      - pvcd
+      - rabbitmq
+      - redis
+
+  worker-video:
+    container_name: pvcd-demo_worker-video
+    build:
+      context: ./workers/video
+      dockerfile: Dockerfile
+    environment:
+      - C_FORCE_ROOT=TRUE
+    tty: true
+    stdin_open: true
+    ports:
+      - 5556:5555
+    volumes:
+      - "/home/mmlab/Documents/ms/pvcd-demo/workers/video:/workspace"
+      - "reference:/reference"
+      - "media:/media"
+    depends_on:
+      - pvcd
+      - rabbitmq
+      - redis
+
+  worker-search:
+    container_name: pvcd-demo_worker-search
+    build:
+      context: ./workers/search
+      dockerfile: Dockerfile
+    environment:
+      - C_FORCE_ROOT=TRUE
+    tty: true
+    stdin_open: true
+    ports:
+      - 5557:5555
+    volumes:
+      - "/home/mmlab/Documents/ms/pvcd-demo/workers/search:/workspace"
+      - "reference:/reference"
+      - "media:/media"
+    depends_on:
+      - pvcd
+      - rabbitmq
+      - redis
+
+
+volumes:
+  static:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/home/mmlab/Documents/ms/pvcd-demo/static"
+      o: bind
+  media:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/home/mmlab/Documents/ms/pvcd-demo/media"
+      o: bind
+  reference:
+    driver: local
+    driver_opts:
+      type: none
+      device: "/home/mmlab/Documents/ms/pvcd-demo/reference"
+      o: bind
+  nfs_shared_:
+    driver_opts:
+      type: "nfs"
+      o: "addr=mldisk2.sogang.ac.kr,nolock,soft,rw"
+      device: ":/volume3/nfs_shared_"
+  nfs_shared:
+    driver_opts:
+      type: "nfs"
+      o: "addr=mldisk2.sogang.ac.kr,nolock,soft,rw"
+      device: ":/volume2/nfs_shared"
+
+    
+
