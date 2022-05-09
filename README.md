@@ -1,10 +1,10 @@
 # pvcd-demo
 
-[Homepage](http://mltigers.sogang.ac.kr:8777)
+[Homepage](http://mltigers.sogang.ac.kr:8777) - [Transformed Videos](https://www.dropbox.com/s/cfdzho9395kk9iy/samples.zip)
 
 ![Video](https://imgur.com/6SWNZ13.gif)
 
-[Query Samples](https://www.dropbox.com/s/cfdzho9395kk9iy/samples.zip)
+
 
 - reference(vcdb-core)
   ```
