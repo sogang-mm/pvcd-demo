@@ -4,6 +4,7 @@
 
 ![Video](https://imgur.com/6SWNZ13.gif)
 
+[Query Samples](https://www.dropbox.com/s/cfdzho9395kk9iy/samples.zip)
 
 - reference(vcdb-core)
   ```
