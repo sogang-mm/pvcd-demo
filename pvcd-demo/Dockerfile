@@ -5,6 +5,8 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 ARG DEBIAN_FRONTEND=noninteractive
 
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
+
 RUN apt update \
     && apt install -y vim python3-pip python3-dev tzdata openssh-server libmysqlclient-dev
 
@@ -20,5 +22,5 @@ ADD . .
 RUN pip install setuptools==59.6.0
 RUN pip install -r requirements.txt
 
-RUN chmod +x /workspace/script/entrypoint.sh
+#RUN chmod +x /workspace/script/entrypoint.sh
 ENTRYPOINT ["sh","/workspace/script/entrypoint.sh"]

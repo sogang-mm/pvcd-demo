@@ -2,11 +2,13 @@
 set -x
 service ssh start
 
-source ./script/run_migration.sh
+bash ./script/run_migration.sh
 python manage.py loaddata reference.vcdb.json
 
-source ./script/run_celery.sh
-#bash ./script/run_gunicorn.sh
-source ./script/run_django.sh
+bash ./script/run_celery.sh &
+#bash ./script/run_django.sh 0 8001
+bash ./script/run_gunicorn.sh 0 8080
+
+
 
 

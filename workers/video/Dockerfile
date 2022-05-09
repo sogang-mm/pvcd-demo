@@ -5,6 +5,7 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 ARG DEBIAN_FRONTEND=noninteractive
 
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
 RUN apt update \
     && apt install -y vim tzdata python3-pip
 
@@ -19,5 +20,5 @@ RUN pip install -r requirements.txt
 
 
 
-#RUN chmod +x /workspace/run_worker.sh
-#ENTRYPOINT ["sh","/workspace/run_worker.sh"]
+RUN chmod +x /workspace/run_worker.sh
+ENTRYPOINT ["sh","/workspace/run_worker.sh"]
