@@ -2,7 +2,7 @@
 
 - reference(vcdb-core)
   ```
-  /media/mmlab/mldisk/nfs_shared_/ms/pvcd-demo/refernece/vcdb
+  /media/mmlab/mldisk/nfs_shared_/ms/pvcd-demo/reference/vcdb
   ```
 - extractor(model, centroid)
   ```
