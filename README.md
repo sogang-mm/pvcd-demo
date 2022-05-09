@@ -1,12 +1,8 @@
 # pvcd-demo
 
-
-
-
 [Homepage](http://mltigers.sogang.ac.kr:8777)
 
-![Video](https://imgur.com/sYJfKcI.gif)
-
+![Video](https://imgur.com/6SWNZ13.gif)
 
 
 - reference(vcdb-core)
