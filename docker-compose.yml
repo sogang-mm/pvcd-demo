@@ -7,7 +7,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8777:8777"
     volumes:
       - "static:/static"
       - "reference:/reference"
@@ -43,7 +43,7 @@ services:
       - "60000:8001" # for debug
       - "60022:22"
     expose:
-      - "8777"
+      - "8080"
     restart: always
     depends_on:
       mysql:
