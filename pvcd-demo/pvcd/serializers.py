@@ -92,9 +92,11 @@ class QuerySerializer(serializers.HyperlinkedModelSerializer):
             '_video', 'thumbnail', 'name', 'metadata', 'feature', 'results', 'uploaded_date', 'updated_date')
 
     def create(self, validated_data):
+        print(f'Get {validated_data}')
         validated_data['name'] = validated_data['video'].name
         instance = super(QuerySerializer, self).create(validated_data)
         instance = self.update_query_video(instance)
+
         return instance
 
     def update(self, instance, validated_data):

@@ -51,14 +51,3 @@ class Reference(models.Model):
     poster = models.ImageField(storage=ReferenceStorage, max_length=256)
     feature = models.FileField(storage=ReferenceStorage, max_length=256)
     metadata = models.JSONField(null=True)
-
-    def check_status(self):
-        print('====')
-        print(self.id)
-        print(self.name)
-        print(ReferenceStorage.exists(self.video.name), 111, self.video.name, )
-        print(ReferenceStorage.exists(self._video.name), 222, self._video.name, )
-        print(ReferenceStorage.exists(self.thumbnail.name), 333, self.thumbnail.name, )
-        print(ReferenceStorage.exists(self.feature.name), 444, self.feature.name, self.feature)
-
-        print('==============')

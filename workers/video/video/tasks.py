@@ -48,7 +48,7 @@ def print_worker(task):
     def wrapped(*args, **kwargs):
         worker = current_process().name
         thread = threading.currentThread().getName()
-        print(f"Run: {task.__name__}, Worker: {worker}/{thread}")
+        print(f"Run: {task.__name__}, Worker({worker}), Thread({thread})")
         return task(*args, **kwargs)
 
     wrapped.__name__ = task.__name__

@@ -17,7 +17,7 @@ class _FileSystemStorage(FileSystemStorage):
 class ReferenceStorageField(serializers.FileField):
     def to_representation(self, value):
         try:
-            print(value)
+            # print(value)
             url = value.url
         except AttributeError:
             return None
