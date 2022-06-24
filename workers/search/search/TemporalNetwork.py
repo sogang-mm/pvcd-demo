@@ -107,6 +107,8 @@ class TemporalNetwork(object):
         candidate = [dict(zip(labels, [c[0], (c[1] * seg_len).__dict__, (c[2] * seg_len).__dict__, c[3], c[4]]))
                      for cc in candidate.values() for c in cc]
 
+        candidate = sorted(candidate, key=lambda x: x['score'], reverse=True)
+
         return candidate
 
     def _fit(self, window=10, score=-1, match=5, seg_len=5):
